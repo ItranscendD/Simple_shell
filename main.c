@@ -1,35 +1,79 @@
 #include "shell.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
 
-int main(int argc, char **argv)
+/**
+ * main - Simple UNIX command line interpreter
+ *
+ * Return: Always 0.
+ */
+int main(void)
 {
-	char *line = NULL;
+	char *command;
 	size_t len = 0;
-	info_t info = INFO_INIT;
+	ssize_t read;
 
-	if (argc > 1)
+	signal(SIGINT, SIG_IGN);
+
+	while (1)
 	{
-		if (read_history(&info) == -1)
-			perror(get_history_file(&info));
-		_myexit(&info);
+		write(STDOUT_FILENO, "#cisfun$ ", 9);
+		read = getline(&command, &len, stdin);
+
+		if (read == -1)
+		{
+			if (isatty(STDIN_FILENO))
+				write(STDOUT_FILENO, "\n", 1);
+			free(command);
+			exit(EXIT_SUCCESS);
+		}
+
+		if (_strcmp(command, "exit\n") == 0)
+		{
+			free(command);
+			exit(EXIT_SUCCESS);
+		}
+
+		execute_command(command);
 	}
 
-	signal(SIGINT, sigintHandler);
-	set_info(&info, argv);
+	return (0);
+}
 
-	if (isatty(STDIN_FILENO))
-		interactive(&info);
-	else
+/**
+ * execute_command - Execute a command
+ * @command: The command to execute
+ */
+void execute_command(char *command)
+{
+	pid_t child_pid;
+	int status;
+
+	command[_strlen(command) - 1] = '\0'; /* Remove trailing newline */
+
+	child_pid = fork();
+	if (child_pid == -1)
 	{
-		while (getline(&line, &len, stdin) != -1)
+		perror("Error");
+		exit(EXIT_FAILURE);
+	}
+
+	if (child_pid == 0)
+	{
+		/* Child process */
+		if (execve(command, NULL, NULL) == -1)
 		{
-			if (line[0] != '\n')
-				hsh(&info, &line);
+			perror("Error");
+			exit(EXIT_FAILURE);
 		}
 	}
-
-	if (line)
-		free(line);
-	free_info(&info, 0);
-
-	return (info.status);
+	else
+	{
+		/* Parent process */
+		wait(&status);
+	}
 }
