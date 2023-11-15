@@ -1,99 +1,75 @@
 #include "shell.h"
 
 /**
- * _strlen - Calculate the length of a string.
- * @str: The input string.
+ * _strlen - The length of a string is returned
+ * @s: This is the string whose length to check
  *
- * Return: The length of the string.
+ * Return: As an integer length of the string
  */
-int _strlen(char *str)
+int _strlen(char *s)
 {
-	int len = 0;
+	int d = 0;
 
-	while (str[len])
-		len++;
+	if (!s)
+		return (0);
 
-	return (len);
+	while (*s++)
+		d++;
+	return (d);
 }
 
 /**
- * _strcmp - Compare two strings.
- * @s1: The first string.
- * @s2: The second string.
+ * _strcmp - will perform a lexicographic comparison of two strings.
+ * @s1: This is the first string
+ * @s2: This is the second string
  *
- * Return: An integer less than, equal to, or greater than zero if s1 is found,
- * respectively, to be less than, to match, or be greater than s2.
+ * Return: Positive if s1 > s2, zero if s1 == s2, negative if s1 < s2
  */
 int _strcmp(char *s1, char *s2)
 {
-	int i = 0;
-
-	while (s1[i] && s2[i] && s1[i] == s2[i])
-		i++;
-
-	return (s1[i] - s2[i]);
-}
-
-/**
- * starts_with - Check if a string starts with a specific prefix.
- * @str: The string to check.
- * @prefix: The prefix to check for.
- *
- * Return: 1 if the string starts with the prefix, 0 otherwise.
- */
-int starts_with(const char *str, const char *prefix)
-{
-	while (*prefix)
+	while (*s1 && *s2)
 	{
-		if (*prefix != *str)
-			return (0);
-
-		prefix++;
-		str++;
+		if (*s1 != *s2)
+			return (*s1 - *s2);
+		s1++;
+		s2++;
 	}
-
-	return (1);
+	if (*s1 == *s2)
+		return (0);
+	else
+		return (*s1 < *s2 ? -1 : 1);
 }
 
 /**
- * _strcat - Concatenate two strings.
- * @dest: The destination string.
- * @src: The source string.
+ * starts_with - will check if a needle starts with haystack
+ * @haystack: This is the string to be searched
+ * @needle: This is the substring to find
  *
- * Return: A pointer to the resulting string.
+ * Return: As the address of the next char of haystack or NULL
+ */
+char *starts_with(const char *haystack, const char *needle)
+{
+	while (*needle)
+		if (*needle++ != *haystack++)
+			return (NULL);
+	return ((char *)haystack);
+}
+
+/**
+ * _strcat - This concatenates two strings
+ * @dest: This is the destination buffer
+ * @src: This is the source buffer
+ *
+ * Return: As a pointer to the destination buffer
  */
 char *_strcat(char *dest, char *src)
 {
-	int dest_len = _strlen(dest);
-	int i;
+	char *ret = dest;
 
-	for (i = 0; src[i] != '\0'; i++)
-	{
-		dest[dest_len + i] = src[i];
-	}
-
-	dest[dest_len + i] = '\0';
-
-	return (dest);
-}
-
-/**
- * _strcpy - Copy a string.
- * @dest: The destination string.
- * @src: The source string.
- *
- * Return: A pointer to the resulting string.
- */
-char *_strcpy(char *dest, char *src)
-{
-	int i;
-
-	for (i = 0; src[i] != '\0'; i++)
-	{
-		dest[i] = src[i];
-	}
-
-	dest[i] = '\0';
-
-	return (dest);
+	while (*dest)
+		dest++;
+	while (*src)
+		*dest++ = *src++;
+	*dest = *src;
+	return (ret);
 }

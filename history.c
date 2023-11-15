@@ -1,13 +1,14 @@
 #include "shell.h"
 
 /**
- * get_history_file - Get the path to the history file.
- * @info: Information struct containing relevant data.
- * Return: Path to the history file.
+ * get_history_file - will get the history file in the code
+ * @info: this is the parameter struct
+ *
+ * Return: this is the allocated string that contains the history file
  */
 char *get_history_file(info_t *info)
 {
-char *buf, *dir;
+	char *buf, *dir;
 
 	dir = _getenv(info, "HOME=");
 	if (!dir)
@@ -23,13 +24,14 @@ char *buf, *dir;
 }
 
 /**
- * write_history - Write history to the history file.
- * @info: Information struct containing relevant data.
- * Return: 0 on success, -1 on failure.
+ * write_history - will append to an existing file or creates a new file
+ * @info: this is the parameter struct
+ *
+ * Return: if successful, return as 1, if failed -1
  */
 int write_history(info_t *info)
 {
-ssize_t fd;
+	ssize_t fd;
 	char *filename = get_history_file(info);
 	list_t *node = NULL;
 
@@ -51,13 +53,14 @@ ssize_t fd;
 }
 
 /**
- * read_history - Read history from the history file.
- * @info: Information struct containing relevant data.
- * Return: 0 on success, -1 on failure.
+ * read_history - will read the history from the file
+ * @info: This is the parameter struct
+ *
+ * Return: on success histcount ,otherwise 0
  */
 int read_history(info_t *info)
 {
-int d, last = 0, linecount = 0;
+	int d, last = 0, linecount = 0;
 	ssize_t fd, rdlen, fsize = 0;
 	struct stat st;
 	char *buf = NULL, *filename = get_history_file(info);
@@ -99,15 +102,17 @@ int d, last = 0, linecount = 0;
 }
 
 /**
- * build_history_list - Build a history list from a buffer.
- * @info: Information struct containing relevant data.
- * @buf: Buffer containing history data.
- * @linecount: Line count.
- * Return: 0 on success, -1 on failure.
+ * build_history_list - This adds an entry to a history linked list
+ * @info: this is a Structure containing potential arguments.
+ * it is Used to maintain constant function prototype.
+ * @buf: This is the buffer
+ * @linecount: This is the history linecount, know as histcount
+ *
+ * Return: will Always be 0
  */
 int build_history_list(info_t *info, char *buf, int linecount)
 {
-list_t *node = NULL;
+	list_t *node = NULL;
 
 	if (info->history)
 		node = info->history;
@@ -119,13 +124,15 @@ list_t *node = NULL;
 }
 
 /**
- * renumber_history - Renumber the history list.
- * @info: Information struct containing relevant data.
- * Return: 0 on success, -1 on failure.
+ * renumber_history - after changes, renumber the history linked list
+ * @info: Structure containing potential arguments.
+ * it is Used to maintain constant function prototype.
+ *
+ * Return: on return, new histcount
  */
 int renumber_history(info_t *info)
 {
-list_t *node = info->history;
+	list_t *node = info->history;
 	int d = 0;
 
 	while (node)

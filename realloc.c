@@ -1,83 +1,63 @@
 #include "shell.h"
 
 /**
- * _memset - Fill memory with a constant byte.
- * @s: Memory area.
- * @b: Constant byte.
- * @n: Number of bytes to fill.
- * Return: Pointer to the memory area.
+ * _memset - This will fill memory with a constant byte
+ * @s: This is the pointer to the memory area
+ * @b: This is the byte to fill *s with
+ * @n: This is the amount of bytes to be filled
+ *
+ * Return: As (s) a pointer to the memory area s
  */
 char *_memset(char *s, char b, unsigned int n)
 {
-	unsigned int i;
+	unsigned int d;
 
-	if (!s)
-	{
-		print_error(NULL, "Error in _memset: NULL pointer");
-		exit(EXIT_FAILURE);
-	}
-
-	for (i = 0; i < n; i++)
-		s[i] = b;
-
+	for (d = 0; d < n; d++)
+		s[d] = b;
 	return (s);
 }
 
 /**
- * ffree - Free a double pointer and set to NULL.
- * @arr: Double pointer to be freed.
+ * ffree - This will free up a string of strings
+ * @pp: This is the string of strings
  */
-void ffree(char **arr)
+void ffree(char **pp)
 {
-	if (!arr || !*arr)
-	{
-		print_error(NULL, "Error in ffree: NULL pointer");
-		exit(EXIT_FAILURE);
-	}
+	char **a = pp;
 
-	free(*arr);
-	*arr = NULL;
+	if (!pp)
+		return;
+	while (*pp)
+		free(*pp++);
+	free(a);
 }
 
 /**
- * _realloc - Reallocate memory block using malloc and free.
- * @ptr: Pointer to the previously allocated memory.
- * @old_size: Size of the allocated space for ptr.
- * @new_size: New size in bytes to be allocated.
- * Return: Pointer to the newly allocated memory.
+ * _realloc - A block of memory will be reallocated
+ * @ptr: This is the pointer to the previous malloc'ated block
+ * @old_size: This is the byte size of the previous block
+ * @new_size: This is the byte size of the new block
+ *
+ * Return: As a pointer to da ol'block nameen.
  */
 void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size)
 {
-	void *new_ptr;
-
-	if (new_size == 0)
-	{
-		free(ptr);
-		return (NULL);
-	}
+	char *p;
 
 	if (!ptr)
 		return (malloc(new_size));
-
-	if (new_size <= old_size)
+	if (!new_size)
+		return (free(ptr), NULL);
+	if (new_size == old_size)
 		return (ptr);
 
-	new_ptr = malloc(new_size);
-	if (!new_ptr)
-	{
-		print_error(NULL, "Error in _realloc: Memory allocation failed");
-		exit(EXIT_FAILURE);
-	}
+	p = malloc(new_size);
+	if (!p)
+		return (NULL);
 
-	_memset(new_ptr, 0, new_size);
-
-	if (!memcpy(new_ptr, ptr, old_size))
-	{
-		print_error(NULL, "Error in _realloc: Memory copy failed");
-		exit(EXIT_FAILURE);
-	}
-
+	old_size = old_size < new_size ? old_size : new_size;
+	while (old_size--)
+		p[old_size] = ((char *)ptr)[old_size];
 	free(ptr);
-
-	return (new_ptr);
+	return (p);
 }

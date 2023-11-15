@@ -1,125 +1,168 @@
 #include "shell.h"
 
 /**
- * _getenv - Get the value of an environment variable.
- * @info: Information struct containing relevant data.
- * @name: Name of the environment variable.
- * Return: Value of the environment variable or NULL if not found.
+ * input_buf - This will buffer chained commands
+ * @info: the parameter struct
+ * @buf: buffer address
+ * @len: len variable address
+ *
+ * Return: it will return bytes read
  */
-char *_getenv(info_t *info, const char *name)
+ssize_t input_buf(info_t *info, char **buf, size_t *len)
 {
-	list_t *current = info->env;
+	ssize_t r = 0;
+	size_t len_p = 0;
 
-	while (current != NULL)
+	if (!*len) /* if buffer is emptied, fill it */
 	{
-		/* Assumes that each environment variable is in the form "NAME=VALUE" */
-		char *delimiter = strchr(current->str, '=');
-
-		if (delimiter != NULL)
+		free(*buf);
+		*buf = NULL;
+		signal(SIGINT, sigintHandler);
+#if USE_GETLINE
+		r = getline(buf, &len_p, stdin);
+#else
+		r = _getline(info, buf, &len_p);
+#endif
+		if (r > 0)
 		{
-			/* Compare the variable name */
-			if (strncmp(current->str, name, delimiter - current->str) == 0)
+			if ((*buf)[r - 1] == '\n')
 			{
-				/* Return the value of the environment variable */
-				return (delimiter + 1);
+				(*buf)[r - 1] = '\0'; /* remove trailing newline */
+				r--;
+			}
+			info->linecount_flag = 1;
+			remove_comments(*buf);
+			build_history_list(info, *buf, info->histcount++);
+			{
+				*len = r;
+				info->cmd_buf = buf;
 			}
 		}
-
-		current = current->next;
 	}
-
-	return (NULL); /* Variable not found */
+	return (r);
 }
 
 /**
- * _myenv - Implementation of the 'env' builtin command.
- * @info: Information struct containing relevant data.
- * Return: Always 0.
+ * get_input - this gets a line minus the newline
+ * @info: this is the parameter structure
+ *
+ * Return: it will return bytes read
  */
-int _myenv(info_t *info)
+ssize_t get_input(info_t *info)
 {
-	list_t *current = info->env;
+	static char *buf; /* the ';' command chain buffer */
+	static size_t d, a, len;
+	ssize_t r = 0;
+	char **buf_p = &(info->arg), *p;
 
-	while (current != NULL)
+	_putchar(BUF_FLUSH);
+	r = input_buf(info, &buf, &len);
+	if (r == -1) /* EOF */
+		return (-1);
+	if (len) /* commands are left in the chain buffer */
 	{
-		/* Print each environment variable */
-		_puts(current->str);
-		_putchar('\n');
+		a = d; /* init new iterator to current buf position */
+		p = buf + d; /* get pointer for return */
 
-		current = current->next;
-	}
-
-	return (0);
-}
-
-/**
- * _mysetenv - Implementation of the 'setenv' builtin command.
- * @info: Information struct containing relevant data.
- * @var: Name of the environment variable.
- * @value: Value to set for the environment variable.
- * Return: Always 0.
- */
-int _mysetenv(info_t *info, char *var, char *value)
-{
-	char *buf = NULL;
-	list_t *node;
-	char *p;
-
-	if (!var || !value)
-		return (0);
-
-	buf = malloc(_strlen(var) + _strlen(value) + 2);
-	if (!buf)
-		return (1);
-	_strcpy(buf, var);
-	_strcat(buf, "=");
-	_strcat(buf, value);
-	node = info->env;
-	while (node)
-	{
-		p = starts_with(node->str, var);
-		if (p && *p == '=')
+		check_chain(info, buf, &a, d, len);
+		while (a < len) /* iterate to semicolon or end */
 		{
-			free(node->str);
-			node->str = buf;
-			info->env_changed = 1;
-			return (0);
+			if (is_chain(info, buf, &a))
+				break;
+			a++;
 		}
-		node = node->next;
+
+		d = a + 1; /* increment past nulled ';'' */
+		if (d >= len) /* reached end of buffer? */
+		{
+			d = len = 0; /* reset the position and length */
+			info->cmd_buf_type = CMD_NORM;
+		}
+
+		*buf_p = p; /* pass pointer to current command position */
+		return (_strlen(p)); /* return the length of current command */
 	}
-	add_node_end(&(info->env), buf, 0);
-	free(buf);
-	info->env_changed = 1;
-	return (0);
+
+	*buf_p = buf; /* else not a chain, pass back buffer from _getline() */
+	return (r); /* return length of buffer from _getline() */
 }
 
 /**
- * _myunsetenv - Implementation of the 'unsetenv' builtin command.
- * @info: Information struct containing relevant data.
- * @var: Name of the environment variable to unset.
- * Return: Always 0.
+ * read_buf - buffer is read
+ * @info: this is the parameter struct
+ * @buf: buffer address
+ * @d: the size
+ *
+ * Return: will return as r
  */
-int _myunsetenv(info_t *info, char *var)
+ssize_t read_buf(info_t *info, char *buf, size_t *d)
 {
-	list_t *node = info->env;
-	size_t d = 0;
-	char *p;
+	ssize_t r = 0;
 
-	if (!node || !var)
+	if (*d)
 		return (0);
+	r = read(info->readfd, buf, READ_BUF_SIZE);
+	if (r >= 0)
+		*d = r;
+	return (r);
+}
 
-	while (node)
-	{
-		p = starts_with(node->str, var);
-		if (p && *p == '=')
-		{
-			info->env_changed = delete_node_at_index(&(info->env), d);
-			d = 0;
-			node = info->env;
-			continue;
-		}
-		node = node->next;
-		d++;
-	}
-	return (info->env_changed);
+/**
+ * _getline - this will get the next line of input from STDIN
+ * @info: this is the parameter struct
+ * @ptr: preallocated or NULL, the address of pointer to buffer,
+ * @length: this is the size of preallocated ptr buffer, if it is not NULL
+ *
+ * Return: returns as s
+ */
+int _getline(info_t *info, char **ptr, size_t *length)
+{
+	static char buf[READ_BUF_SIZE];
+	static size_t d, len;
+	size_t k;
+	ssize_t r = 0, s = 0;
+	char *p = NULL, *new_p = NULL, *c;
+
+	p = *ptr;
+	if (p && length)
+		s = *length;
+	if (d == len)
+		d = len = 0;
+
+	r = read_buf(info, buf, &len);
+	if (r == -1 || (r == 0 && len == 0))
+		return (-1);
+
+	c = _strchr(buf + d, '\n');
+	k = c ? 1 + (unsigned int)(c - buf) : len;
+	new_p = _realloc(p, s, s ? s + k : k + 1);
+	if (!new_p) /* MALLOC FAILURE! */
+		return (p ? free(p), -1 : -1);
+
+	if (s)
+		_strncat(new_p, buf + d, k - d);
+	else
+		_strncpy(new_p, buf + d, k - d + 1);
+
+	s += k - d;
+	d = k;
+	p = new_p;
+
+	if (length)
+		*length = s;
+	*ptr = p;
+	return (s);
+}
+
+/**
+ * sigintHandler - will block ctrl-C
+ * @sig_num: signal number
+ *
+ * Return: return void
+ */
+void sigintHandler(__attribute__((unused))int sig_num)
+{
+	_puts("\n");
+	_puts("$ ");
+	_putchar(BUF_FLUSH);
 }

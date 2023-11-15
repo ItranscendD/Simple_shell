@@ -1,50 +1,85 @@
 #include "shell.h"
 
 /**
- * print_error - Print an error message.
- * @info: Information struct containing relevant data.
- * @msg: Error message to be printed.
+ * print_error_string - Prints the input string to the standard error.
+ * @str: The string to be printed.
+ *
+ * Return: Always returns 0.
  */
-void print_error(info_t *info, char *msg)
+void print_error_string(char *str)
 {
-_eputs(info->fname);
-_eputs(": ");
-_eputchar(info->line_count + '0');
-_eputs(": ");
-_eputs(msg);
+	int index = 0;
+
+	if (!str)
+		return;
+	while (str[index] != '\0')
+	{
+		write_error_character(str[index]);
+		index++;
+	}
 }
 
 /**
- * print_d - Print a decimal number.
- * @num: Number to be printed.
- * @fd: File descriptor.
- * Return: Number of digits printed.
+ * write_error_character - Writes the character to the standard error.
+ * @c: The character to be written.
+ *
+ * Return: On success, returns 1.
+ * On error, errno is set appropriately, and -1 is returned.
  */
-int print_d(int num, int fd)
+int write_error_character(char c)
 {
-    /* Implementation of print_d function */
-    /* ... */
+	static int index;
+	static char buffer[WRITE_BUFFER_SIZE];
+
+	if (c == BUFFER_FLUSH || index >= WRITE_BUFFER_SIZE)
+	{
+		write(2, buffer, index);
+		index = 0;
+	}
+	if (c != BUFFER_FLUSH)
+		buffer[index++] = c;
+	return (1);
 }
 
 /**
- * convert_number - Convert a number to a string.
- * @num: Number to be converted.
- * @flags: Conversion flags.
- * @base: Base for conversion.
- * Return: Converted string.
+ * write_to_file_descriptor - Writes the character to a given file descriptor.
+ * @c: The character to be written.
+ * @fd: The file descriptor to write to.
+ *
+ * Return: On success, returns 1.
+ * On error, errno is set appropriately, and -1 is returned.
  */
-char *convert_number(long int num, int flags, int base)
+int write_to_file_descriptor(char c, int fd)
 {
-    /* Implementation of convert_number function */
-    /* ... */
+	static int index;
+	static char buffer[WRITE_BUFFER_SIZE];
+
+	if (c == BUFFER_FLUSH || index >= WRITE_BUFFER_SIZE)
+	{
+		write(fd, buffer, index);
+		index = 0;
+	}
+	if (c != BUFFER_FLUSH)
+		buffer[index++] = c;
+	return (1);
 }
 
 /**
- * remove_comments - Remove comments from a string.
- * @str: String to be processed.
+ * print_to_file_descriptor - Prints input str to given file descriptor.
+ * @str: The string to be printed.
+ * @fd: The file descriptor to write to.
+ *
+ * Return: The number of characters written.
  */
-void remove_comments(char *str)
+int print_to_file_descriptor(char *str, int fd)
 {
-    /* Implementation of remove_comments function */
-    /* ... */
+	int count = 0;
+
+	if (!str)
+		return (0);
+	while (*str)
+	{
+		count += write_to_file_descriptor(*str++, fd);
+	}
+	return (count);
 }

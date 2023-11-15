@@ -1,25 +1,25 @@
 #include "shell.h"
 
 /**
- * clear_info - Clear the fields of the info_t structure.
- * @info: Structure to be cleared.
+ * clear_info - initializes the info_t structure
+ * @info: this is the structure address
  */
 void clear_info(info_t *info)
 {
-info->arg = NULL;
+	info->arg = NULL;
 	info->argv = NULL;
 	info->path = NULL;
 	info->argc = 0;
 }
 
 /**
- * set_info - Set the fields of the info_t structure.
- * @info: Structure to be set.
- * @args: Arguments to set in the structure.
+ * set_info - this initializes the info_t struct
+ * @info: this is the struct address
+ * @av: this is the argument vector
  */
-void set_info(info_t *info, char **args)
+void set_info(info_t *info, char **av)
 {
-int d = 0;
+	int d = 0;
 
 	info->fname = av[0];
 	if (info->arg)
@@ -44,13 +44,13 @@ int d = 0;
 }
 
 /**
- * free_info - Free the allocated memory in the info_t structure.
- * @info: Structure to be freed.
- * @flags: Flags to indicate which fields to free.
+ * free_info - This will free up the info_t struct fields
+ * @info: this is the struct address
+ * @all: if freeing all fields, it is true
  */
-void free_info(info_t *info, int flags)
+void free_info(info_t *info, int all)
 {
-ffree(info->argv);
+	ffree(info->argv);
 	info->argv = NULL;
 	info->path = NULL;
 	if (all)
@@ -64,7 +64,7 @@ ffree(info->argv);
 		if (info->alias)
 			free_list(&(info->alias));
 		ffree(info->environ);
-			info->environ = NULL;
+		info->environ = NULL;
 		bfree((void **)info->cmd_buf);
 		if (info->readfd > 2)
 			close(info->readfd);
