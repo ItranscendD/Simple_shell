@@ -86,8 +86,10 @@ int print_single_alias(list_t *node)
 int manage_alias(info_t *info)
 {
 	int i;
-	char *equals, *alias;
+	char *equals;
 	list_t *node;
+
+	equals = NULL; /* marking the variable as intentionally unused */
 
 	if (info->argc == 1)
 	{

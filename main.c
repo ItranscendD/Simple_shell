@@ -1,79 +1,44 @@
 #include "shell.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
 
 /**
- * main - Simple UNIX command line interpreter
+ * main - This is the entry point
+ * @ac: This is the arg count
+ * @av: This is the arg vector
  *
- * Return: Always 0.
+ * Return: 1 on error, 0 on success 
  */
-int main(void)
+int main(int ac, char **av)
 {
-	char *command;
-	size_t len = 0;
-	ssize_t read;
+	info_t info[] = {INFO_INIT};
+	int fd = 2;
 
-	signal(SIGINT, SIG_IGN);
+	asm("mov %1, %0\n\t"
+	    "add $3, %0"
+	    : "=r"(fd)
+	    : "r"(fd));
 
-	while (1)
+	if (ac == 2)
 	{
-		write(STDOUT_FILENO, "#cisfun$ ", 9);
-		read = getline(&command, &len, stdin);
-
-		if (read == -1)
+		fd = open(av[1], O_RDONLY);
+		if (fd == -1)
 		{
-			if (isatty(STDIN_FILENO))
-				write(STDOUT_FILENO, "\n", 1);
-			free(command);
-			exit(EXIT_SUCCESS);
+			if (errno == EACCES)
+				exit(126);
+			if (errno == ENOENT)
+			{
+				_eputs(av[0]);
+				_eputs(": 0: Can't open ");
+				_eputs(av[1]);
+				_eputchar('\n');
+				_eputchar(BUF_FLUSH);
+				exit(127);
+			}
+			return (EXIT_FAILURE);
 		}
-
-		if (_strcmp(command, "exit\n") == 0)
-		{
-			free(command);
-			exit(EXIT_SUCCESS);
-		}
-
-		execute_command(command);
+		info->readfd = fd;
 	}
-
-	return (0);
-}
-
-/**
- * execute_command - Execute a command
- * @command: The command to execute
- */
-void execute_command(char *command)
-{
-	pid_t child_pid;
-	int status;
-
-	command[_strlen(command) - 1] = '\0'; /* Remove trailing newline */
-
-	child_pid = fork();
-	if (child_pid == -1)
-	{
-		perror("Error");
-		exit(EXIT_FAILURE);
-	}
-
-	if (child_pid == 0)
-	{
-		/* Child process */
-		if (execve(command, NULL, NULL) == -1)
-		{
-			perror("Error");
-			exit(EXIT_FAILURE);
-		}
-	}
-	else
-	{
-		/* Parent process */
-		wait(&status);
-	}
+	populate_env_list(info);
+	read_history(info);
+	hsh(info, av);
+	return (EXIT_SUCCESS);
 }
