@@ -2,11 +2,10 @@
 
 /**
  * _myexit - Exit the shell.
- * @info: Contains potential arguments.
- * Used to maintain constant function prototype.
- *
- * Return: Exit status.
- * "exit" = (0) if info->argv[0] exists.
+ * @info: Structure containing potential arguments. Used to maintain
+ *        constant function prototype.
+ * Return: Exits with the given exit status.
+ *         Returns -2 for exit without an argument.
  */
 int _myexit(info_t *info)
 {
@@ -31,11 +30,10 @@ int _myexit(info_t *info)
 }
 
 /**
- * _mycd - Change the directory of the current process.
- * @info: Contains potential arguments.
- * Used to maintain constant function prototype.
- *
- * Return: Always return 0.
+ * _mycd - Change the current process directory.
+ * @info: Structure containing potential arguments. Used to maintain
+ *        constant function prototype.
+ * Return: Always returns 0.
  */
 int _mycd(info_t *info)
 {
@@ -49,8 +47,7 @@ int _mycd(info_t *info)
 	{
 		dir = _getenv(info, "HOME=");
 		if (!dir)
-			chdir_ret = /* TODO: what should this be? */
-				chdir((dir = _getenv(info, "PWD=")) ? dir : "/");
+			chdir_ret = chdir((dir = _getenv(info, "PWD=")) ? dir : "/");
 		else
 			chdir_ret = chdir(dir);
 	}
@@ -63,8 +60,7 @@ int _mycd(info_t *info)
 			return (1);
 		}
 		_puts(_getenv(info, "OLDPWD=")), _putchar('\n');
-		chdir_ret = /* TODO: what should this be? */
-			chdir((dir = _getenv(info, "OLDPWD=")) ? dir : "/");
+		chdir_ret = chdir((dir = _getenv(info, "OLDPWD=")) ? dir : "/");
 	}
 	else
 		chdir_ret = chdir(info->argv[1]);
@@ -82,23 +78,16 @@ int _mycd(info_t *info)
 }
 
 /**
- * _myhelp - Display help information.
- * @info: Contains potential arguments.
- * Used to maintain constant function prototype.
- *
- * Return: Always return 0.
+ * _myhelp - Print help message.
+ * @info: Structure containing potential arguments. Used to maintain
+ *          constant function prototype.
+ * Return: Always returns 0.
  */
-int _myhelp(info_t *info)
+int _myhelp(info_t __attribute__ ((unused)) *info)
 {
-	char *equals;
 	char **arg_array;
 
-	(void)equals; /* Marking the variable as intentionally unused */
-
-	arg_array = info->argv;
-
+	(void)arg_array; /* temp att_unused workaround */
 	_puts("help call works. Function not yet implemented \n");
-	if (0)
-		_puts(*arg_array); /* temp att_unused workaround */
 	return (0);
 }

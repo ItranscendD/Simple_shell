@@ -1,16 +1,17 @@
 #ifndef _SHELL_H_
 #define _SHELL_H_
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
-#include <string.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <limits.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <string.h>
+#include <limits.h>
+
 
 /* Command chaining */
 #define CMD_NORM 0
@@ -102,10 +103,10 @@ int histcount;
  * @type: Builtin command flag
  * @func: Function
  */
-typedef struct builtin
+typedef struct builtin_table
 {
 char *type;
-int (*func)(info_t *);
+int (*func)(info_t *info);
 } builtin_table;
 
 /* toem_shloop.c */
@@ -170,8 +171,8 @@ char *convert_number(long int, int, int);
 void remove_comments(char *);
 
 /* toem_builtin.c */
-int _myexit(info_t *);
-int _mycd(info_t *);
+int _myexit(info_t *info);
+int _mycd(info_t *info);
 int _myhelp(info_t *);
 
 /* toem_builtin1.c */
@@ -189,10 +190,10 @@ void set_info(info_t *, char **);
 void free_info(info_t *, int);
 
 /* toem_environ.c */
-char *_getenv(info_t *, const char *);
+char *_getenv(info_t *info, const char *);
 int _myenv(info_t *);
-int _mysetenv(info_t *);
-int _myunsetenv(info_t *);
+int _mysetenv(info_t *info);
+int _myunsetenv(info_t *info);
 int populate_env_list(info_t *);
 
 /* toem_getenv.c */
